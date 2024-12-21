@@ -1,4 +1,3 @@
-
 <#
 .SYNOPSIS
     Retrieves the configuration settings for the Chocolatey Update Monitor.
@@ -95,12 +94,13 @@ function Get-ChocolateyUpdate {
         $sourceNamesToDisable | ForEach-Object { choco source disable -n $_ }
 
         try {
-            $outdatedPackages = roco outdated -r | ConvertFrom-Csv -Delimiter '|' -Header 'Name', 'CurrentVersion', 'AvailableVersion', 'Pinned'
-            $outdatedPackage | add-member -NotePropertyName Source -NotePropertyValue $thisChocoSource.SourceURL
+            $outdatedPackage = roco outdated -r | ConvertFrom-Csv -Delimiter '|' -Header 'Name', 'CurrentVersion', 'AvailableVersion', 'Pinned'
+            Write-Verbose "Source URL: $($thisChocoSource.SourceURL)"
+            $outdatedPackage | Add-Member -NotePropertyName Source -NotePropertyValue $thisChocoSource.SourceURL
             $outdatedPackages += $outdatedPackage
         } catch {
             Write-Verbose "There was a problem running Rocolatey."
-        }finally {
+        } finally {
             Write-Verbose "Re-enabling temporarily disabled sources"
             $sourceNamesToDisable | ForEach-Object { choco source enable -n $_ }
         }
@@ -115,7 +115,8 @@ function Get-ChocolateyUpdate {
                 if ($request.StatusCode -eq 200) {
                     Write-Verbose "Retrieving updates from $($source.SourceURL)..."
                     $outdatedPackage = choco outdated --source $source.SourceURL -r --ignore-unfound | ConvertFrom-Csv -Delimiter '|' -Header 'Name', 'CurrentVersion', 'AvailableVersion', 'Pinned'
-                    $outdatedPackage | add-member -NotePropertyName Source -NotePropertyValue $source.SourceURL
+                    Write-Verbose "Source URL: $($source.SourceURL)"
+                    $outdatedPackage | Add-Member -NotePropertyName Source -NotePropertyValue $source.SourceURL
                     $outdatedPackages += $outdatedPackage
                 } else {
                     Write-Verbose "Skipping source $($source.SourceURL) as it's not online."
